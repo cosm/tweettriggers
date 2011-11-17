@@ -1,6 +1,7 @@
 # README
 
 An app is defined by three URLs:
+
  * `/setup`                   :  used for initial trigger creation
  * `/configure/:trigger_id`   :  used to configure / reconfigure the trigger
  * `/trigger/:trigger_id`     :  used to send the actual trigger to

@@ -1,0 +1,25 @@
+<%= erb :_form %>
+<script>
+  pbt.addEventListener('save', function(cb){
+    $.ajax({
+      type: 'PUT',
+      url: '/triggers/<%= @trigger.hash %>',
+      data: $("#tweetform").serialize(),
+      success: function(data){
+        pbt.saved(window.location.href.replace('/edit', '/send'));
+      }
+    });
+  })
+
+  pbt.addEventListener('delete', function(cb){
+    $.ajax({
+      type: 'DELETE',
+      url: '/triggers/<%= @trigger.hash %>',
+      success: function(data){
+        pbt.deleted();
+      }
+    });
+  })
+
+  pbt.ready();
+</script>

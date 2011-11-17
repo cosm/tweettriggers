@@ -1,0 +1,9 @@
+.DS_Store
+*.log
+.sass-cache
+tmp/restart.txt
+config/database.yml
+config/twitter.yml
+*._*
+*.sw?
+coverage/*

@@ -1,0 +1,2 @@
+:development:
+  :db_uri: postgres://user:pass@host/db

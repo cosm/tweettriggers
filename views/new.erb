@@ -1,0 +1,15 @@
+<%= erb :_form %>
+<script>
+  pbt.addEventListener('save', function(cb){
+    $.ajax({
+      type: 'POST',
+      url: '/triggers',
+      data: $("#tweetform").serialize(),
+      success: function(data){
+        pbt.saved(window.location.href.replace('/new', '/') + data.trigger_hash + '/send');
+      }
+    });
+  })
+
+  pbt.ready();
+</script>

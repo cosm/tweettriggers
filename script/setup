@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e
+
+echo "Checking yml files"
+for file in database.yml twitter.yml
+do
+  if [[ ! -f "config/$file" ]]; then
+    echo "MISSING CONFIG FILE: $file"
+    exit 1
+  fi
+done
+
+echo "Building bundle"
+bundle install
+
+echo "Creating all databases"
+rake db:create:all
+
+echo "Migrating database"
+rake db:migrate
+
+echo "Preparing test db"
+rake db:test:prepare

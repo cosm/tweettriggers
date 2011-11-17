@@ -1,0 +1,9 @@
+<form action="" method="post" id="tweetform">
+  <label for="tweet">Tweet text</label>
+  <p class="tips">You can use {datastream}, {feed}, {value}, {time}, {feed_url} to have Pachube insert dynamic text</p>
+  <textarea id="tweet" name="tweet"><% if @trigger && @trigger.tweet %><%= @trigger.tweet %><% else %>Datastream {datastream} of feed {feed} changed to {value} at {time} on #pachube at {feed_url}<% end %></textarea>
+  <label>Tweet preview</label>
+  <p id="previewtweet"></p>
+</form>
+
+<script src="/main.js"></script>

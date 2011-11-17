@@ -1,0 +1,26 @@
+<script>
+
+var oauthWindow;
+
+document.ready = function(){
+  $('#connect').click(function(){
+      oauthWindow = window.open('/auth/twitter', 'Authenticate with Twitter', 'location=0,status=0,width=800,height=400');
+      return false;
+  });
+}
+
+var success = function(){
+  oauthWindow.close();
+  window.location = '/triggers/new'
+}
+
+var failure = function(){
+  oauthWindow.close();
+  window.location = '/auth/failure'
+}
+
+</script>
+<% if defined?(@msg) %>
+<p class="error"><%= @msg %></p>
+<% end %>
+<a href="#" id="connect">Authenticate with Twitter</a>

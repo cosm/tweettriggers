@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title><%= APP_TITLE %></title>
+    <link rel="stylesheet" href="http://appdev.loc/stylesheets/triggers/main.css" />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <script src="/porthole.min.js"></script>
+    <script src="/pachube_trigger.js"></script>
+    <script>
+var pbt = new PachubeTrigger();
+    </script>
+  </head>
+  <body>
+    <%= yield %>
+  </body>  
+</html>

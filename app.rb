@@ -12,30 +12,33 @@ require 'time'
 require './lib/models'
 
 def setup_db
-  db_uri = if ENV['DATABASE_URL']
-    ENV['DATABASE_URL']
-  elsif File.exist?('config/database.yml')
-    YAML::load(File.read('config/database.yml'))[settings.environment][:db_uri]
-  end
-  
-  raise "Error setting up database" if db_uri.nil?
-  db = URI.parse(db_uri)
+  if ENV['DATABASE_URL']
+    db_uri = URI.parse(ENV["DATABASE_URL"])
 
-  ActiveRecord::Base.establish_connection(
-    :adapter  => db.scheme == 'postgres' ? 'postgresql' : db.scheme,
-    :host     => db.host,
-    :username => db.user,
-    :password => db.password,
-    :database => db.path[1..-1],
-    :encoding => 'utf8'
-  )
+    raise "Error setting up database" if db_uri.nil?
+
+    ActiveRecord::Base.configurations = { settings.environment =>
+      {
+        :adapter  => db_uri.scheme == 'postgres' ? 'postgresql' : db_uri.scheme,
+        :host     => db_uri.host,
+        :username => db_uri.user,
+        :password => db_uri.password,
+        :database => db_uri.path[1..-1],
+        :encoding => 'utf8'
+      }
+    }
+  else
+    ActiveRecord::Base.configurations = YAML.load_file("config/database.yml").with_indifferent_access
+  end
+
+  ActiveRecord::Base.establish_connection(ActiveRecord::Base.configurations[settings.environment])
 end
 
 def load_twitter_conf
   $twitter_config = if ENV['TWITTER_CONSUMER_KEY'] && ENV['TWITTER_CONSUMER_SECRET']
-    {:consumer_key => ENV['TWITTER_CONSUMER_KEY'], :consumer_secret => ENV['TWITTER_CONSUMER_SECRET']}
+    {:consumer_key => ENV['TWITTER_CONSUMER_KEY'], :consumer_secret => ENV['TWITTER_CONSUMER_SECRET']}.with_indifferent_access
   elsif File.exist?('config/twitter.yml')
-    YAML::load(File.read('config/twitter.yml'))[settings.environment]
+    YAML.load_file("config/twitter.yml").with_indifferent_access[settings.environment]
   end
   raise "Error loading twitter conf" if $twitter_config.nil?
 end

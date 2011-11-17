@@ -1,2 +1,18 @@
-:development:
-  :db_uri: postgres://user:pass@host/db
+
+development:
+  adapter: postgresql
+  encoding: unicode
+  database: twittertrigger_development
+  pool: 5
+  username: rails
+  password:
+  template: template0
+
+test:
+  adapter: postgresql
+  encoding: unicode
+  database: twittertrigger_test
+  pool: 5
+  username: rails
+  password:
+  template: template0

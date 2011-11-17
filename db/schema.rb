@@ -10,16 +10,12 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 2) do
+ActiveRecord::Schema.define(:version => 3) do
 
   create_table "triggers", :force => true do |t|
-    t.string  "hash",              :limit => 40, :null => false
-    t.integer "user_id",                         :null => false
+    t.string  "hash",    :limit => 40, :null => false
+    t.integer "user_id",               :null => false
     t.string  "tweet"
-    t.integer "pachube_feed_id"
-    t.string  "pachube_stream_id"
-    t.string  "trigger_type"
-    t.string  "threshold_value"
   end
 
   add_index "triggers", ["hash"], :name => "index_triggers_on_hash", :unique => true

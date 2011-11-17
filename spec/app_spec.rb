@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
+require 'spec_helper'
 
 describe APP_TITLE do
   include Rack::Test::Methods
@@ -10,22 +10,27 @@ describe APP_TITLE do
   describe "configure" do
     describe "setup_db" do
       it "should setup the db connection" do
-        db_uri = 'postgres://user1:passw0rd@myhost/path'
-        File.should_receive(:read).with('config/database.yml').and_return(YAML::dump({:test => {:db_uri => db_uri}}))
+        config = { :test => { :adapter => "postgresql", :encoding => "utf8",
+          :database => "path", :pool => 5, :username => "user1",
+          :password => "passw0rd", :template => "template0", :host => "myhost" } }
+
+        YAML.should_receive(:load_file).with("config/database.yml").and_return(config)
         ActiveRecord::Base.should_receive(:establish_connection).with(
-          :adapter  => 'postgresql',
-          :host     => 'myhost',
-          :username => 'user1',
-          :password => 'passw0rd',
-          :database => 'path',
-          :encoding => 'utf8'
+          "adapter"  => 'postgresql',
+          "host"     => 'myhost',
+          "username" => 'user1',
+          "password" => 'passw0rd',
+          "database" => 'path',
+          "encoding" => 'utf8',
+          "pool" => 5,
+          "template" => "template0"
         )
         setup_db
       end
 
       it "should use the environment variable database_uri if provided" do
         db_uri = 'postgres://user1:passw0rd@myhost/path'
-        File.should_not_receive(:read)
+        YAML.should_not_receive(:load_file)
         ENV.should_receive(:[]).twice.with('DATABASE_URL').and_return(db_uri)
         ActiveRecord::Base.should_receive(:establish_connection).with(
           :adapter  => 'postgresql',
@@ -38,9 +43,9 @@ describe APP_TITLE do
         setup_db
       end
 
-      it "should throw an error if no db_uri is set" do
+      it "should throw an error if no db_uri is set and config file is empty" do
         ENV.should_receive(:[]).with('DATABASE_URL').and_return(nil)
-        File.should_receive(:read).with('config/database.yml').and_return(YAML::dump({:test => {}}))
+        YAML.should_receive(:load_file).with('config/database.yml').and_return(YAML::dump({:test => {}}))
 
         lambda {
           setup_db
@@ -51,7 +56,7 @@ describe APP_TITLE do
     describe "load_twitter_conf" do
       before(:each) do
         @old_twitter_config = $twitter_config
-        @twitter_settings = {:consumer_key => 'key', :consumer_secret => 'secret'}
+        @twitter_settings = {"consumer_key" => 'key', "consumer_secret" => 'secret'}
       end
 
       after(:each) do
@@ -59,7 +64,7 @@ describe APP_TITLE do
       end
 
       it "should setup the twitter omniauth" do
-        File.should_receive(:read).with('config/twitter.yml').and_return(YAML::dump({:test => @twitter_settings}))
+        YAML.should_receive(:load_file).with('config/twitter.yml').and_return({ :test => @twitter_settings })
         load_twitter_conf
         $twitter_config.should == @twitter_settings
       end
@@ -73,7 +78,7 @@ describe APP_TITLE do
 
       it "should throw an error if no twitter config is set" do
         ENV.should_receive(:[]).with('TWITTER_CONSUMER_KEY').and_return(nil)
-        File.should_receive(:read).with('config/twitter.yml').and_return(YAML::dump({}))
+        YAML.should_receive(:load_file).with('config/twitter.yml').and_return(YAML::dump({}))
 
         lambda {
           load_twitter_conf

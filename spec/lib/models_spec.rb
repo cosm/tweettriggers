@@ -32,6 +32,14 @@ describe Trigger do
     @trigger.user.twitter_name.should == 'TheRealRickAstley'
   end
 
+  it "should not find the trigger if searched for by another user" do
+    user2 = User.create!(:twitter_name => 'FakeRick')
+    trigger2 = user2.triggers.create!(
+      :tweet => '{value}, {time}, {datastream}, {feed}, {feed_url}'
+    )
+    @user.triggers.find_by_hash(trigger2.hash).should be_nil
+  end
+
   context "validation" do
     it "should generate the hash before validation" do
       @trigger.hash = nil

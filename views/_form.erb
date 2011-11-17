@@ -2,8 +2,12 @@
   <label for="tweet">Tweet text</label>
   <p class="tips">You can use {datastream}, {feed}, {value}, {time}, {feed_url} to have Pachube insert dynamic text</p>
   <textarea id="tweet" name="tweet"><% if @trigger && @trigger.tweet %><%= @trigger.tweet %><% else %>Datastream {datastream} of feed {feed} changed to {value} at {time} on #pachube at {feed_url}<% end %></textarea>
-  <label>Tweet preview</label>
+  <label>Tweet preview - @<%= session[:user] %></label>
   <p id="previewtweet"></p>
+  <p class="tweet-counter"><input id="tweet-counter" value="140" disabled="disabled" /> (NOTE: this count is approximate as it depends on your actual stream and feed ids)</p>
+  <% if @trigger.nil? %>
+  <p><a href="#" id="twittertrigger-signout">Sign out of Twitter (@<%= session[:user] %>)</a></p>
+  <% end %>
 </form>
 
 <script src="/main.js"></script>

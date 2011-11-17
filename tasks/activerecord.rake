@@ -25,9 +25,9 @@ namespace :db do
     end
   end
 
-  desc 'Create the database defined in config/database.yml for the current APP_ENV'
+  desc 'Create the database defined in config/database.yml for the current settings.environment'
   task :create => :environment do
-    create_database(ActiveRecord::Base.configurations[APP_ENV])
+    create_database(ActiveRecord::Base.configurations[settings.environment])
   end
 
   def create_database(config)
@@ -45,8 +45,8 @@ namespace :db do
           ActiveRecord::Base.connection
       end
       
-    rescue
-      puts "Config: #{config['adapter']}"
+    rescue Exception => e
+      #puts "Config: #{config['adapter']}, exception: #{e.inspect}"
       
       case config['adapter']
       when 'mysql'
@@ -91,9 +91,9 @@ namespace :db do
     end
   end
 
-  desc 'Drops the database for the current APP_ENV'
+  desc 'Drops the database for the current settings.environment'
   task :drop => :environment do
-    config = ActiveRecord::Base.configurations[APP_ENV || 'development']
+    config = ActiveRecord::Base.configurations[settings.environment || 'development']
     begin
       drop_database(config)
     rescue Exception => e
@@ -153,7 +153,7 @@ namespace :db do
 
   desc "Retrieves the charset for the current environment's database"
   task :charset => :environment do
-    config = ActiveRecord::Base.configurations[APP_ENV || 'development']
+    config = ActiveRecord::Base.configurations[settings.environment || 'development']
     case config['adapter']
     when 'mysql'
       ActiveRecord::Base.establish_connection(config)
@@ -165,7 +165,7 @@ namespace :db do
 
   desc "Retrieves the collation for the current environment's database"
   task :collation => :environment do
-    config = ActiveRecord::Base.configurations[APP_ENV || 'development']
+    config = ActiveRecord::Base.configurations[settings.environment || 'development']
     case config['adapter']
     when 'mysql'
       ActiveRecord::Base.establish_connection(config)
@@ -199,7 +199,7 @@ namespace :db do
     desc "Load fixtures into the current environment's database.  Load specific fixtures using FIXTURES=x,y"
     task :load => :environment do
       require 'active_record/fixtures'
-      ActiveRecord::Base.establish_connection(APP_ENV.to_sym)
+      ActiveRecord::Base.establish_connection(settings.environment.to_sym)
       (ENV['FIXTURES'] ? ENV['FIXTURES'].split(/,/) : Dir.glob(File.join(APP_ROOT, 'test', 'fixtures', '*.{yml,csv}'))).each do |fixture_file|
         Fixtures.create_fixtures('test/fixtures', File.basename(fixture_file, '.*'))
       end
@@ -248,34 +248,34 @@ namespace :db do
     desc "Dump the database structure to a SQL file"
     task :dump => :environment do
       abcs = ActiveRecord::Base.configurations
-      case abcs[APP_ENV]["adapter"]
+      case abcs[settings.environment]["adapter"]
       when "mysql", "oci", "oracle"
-        ActiveRecord::Base.establish_connection(abcs[APP_ENV])
-        File.open("db/#{APP_ENV}_structure.sql", "w+") { |f| f << ActiveRecord::Base.connection.structure_dump }
+        ActiveRecord::Base.establish_connection(abcs[settings.environment])
+        File.open("db/#{settings.environment}_structure.sql", "w+") { |f| f << ActiveRecord::Base.connection.structure_dump }
       when "postgresql"
-        ENV['PGHOST']     = abcs[APP_ENV]["host"] if abcs[APP_ENV]["host"]
-        ENV['PGPORT']     = abcs[APP_ENV]["port"].to_s if abcs[APP_ENV]["port"]
-        ENV['PGPASSWORD'] = abcs[APP_ENV]["password"].to_s if abcs[APP_ENV]["password"]
-        search_path = abcs[APP_ENV]["schema_search_path"]
+        ENV['PGHOST']     = abcs[settings.environment]["host"] if abcs[settings.environment]["host"]
+        ENV['PGPORT']     = abcs[settings.environment]["port"].to_s if abcs[settings.environment]["port"]
+        ENV['PGPASSWORD'] = abcs[settings.environment]["password"].to_s if abcs[settings.environment]["password"]
+        search_path = abcs[settings.environment]["schema_search_path"]
         search_path = "--schema=#{search_path}" if search_path
-        `pg_dump -i -U "#{abcs[APP_ENV]["username"]}" -s -x -O -f db/#{APP_ENV}_structure.sql #{search_path} #{abcs[APP_ENV]["database"]}`
+        `pg_dump -i -U "#{abcs[settings.environment]["username"]}" -s -x -O -f db/#{settings.environment}_structure.sql #{search_path} #{abcs[settings.environment]["database"]}`
         raise "Error dumping database" if $?.exitstatus == 1
       when "sqlite", "sqlite3"
-        dbfile = abcs[APP_ENV]["database"] || abcs[APP_ENV]["dbfile"]
-        `#{abcs[APP_ENV]["adapter"]} #{dbfile} .schema > db/#{APP_ENV}_structure.sql`
+        dbfile = abcs[settings.environment]["database"] || abcs[settings.environment]["dbfile"]
+        `#{abcs[settings.environment]["adapter"]} #{dbfile} .schema > db/#{settings.environment}_structure.sql`
       when "sqlserver"
-        `scptxfr /s #{abcs[APP_ENV]["host"]} /d #{abcs[APP_ENV]["database"]} /I /f db\\#{APP_ENV}_structure.sql /q /A /r`
-        `scptxfr /s #{abcs[APP_ENV]["host"]} /d #{abcs[APP_ENV]["database"]} /I /F db\ /q /A /r`
+        `scptxfr /s #{abcs[settings.environment]["host"]} /d #{abcs[settings.environment]["database"]} /I /f db\\#{settings.environment}_structure.sql /q /A /r`
+        `scptxfr /s #{abcs[settings.environment]["host"]} /d #{abcs[settings.environment]["database"]} /I /F db\ /q /A /r`
       when "firebird"
-        set_firebird_env(abcs[APP_ENV])
-        db_string = firebird_db_string(abcs[APP_ENV])
-        sh "isql -a #{db_string} > db/#{APP_ENV}_structure.sql"
+        set_firebird_env(abcs[settings.environment])
+        db_string = firebird_db_string(abcs[settings.environment])
+        sh "isql -a #{db_string} > db/#{settings.environment}_structure.sql"
       else
         raise "Task not supported by '#{abcs["test"]["adapter"]}'"
       end
 
       if ActiveRecord::Base.connection.supports_migrations?
-        File.open("db/#{APP_ENV}_structure.sql", "a") { |f| f << ActiveRecord::Base.connection.dump_schema_information }
+        File.open("db/#{settings.environment}_structure.sql", "a") { |f| f << ActiveRecord::Base.connection.dump_schema_information }
       end
     end
   end
@@ -298,28 +298,28 @@ namespace :db do
       when "mysql"
         ActiveRecord::Base.establish_connection(:test)
         ActiveRecord::Base.connection.execute('SET foreign_key_checks = 0')
-        IO.readlines("db/#{APP_ENV}_structure.sql").join.split("\n\n").each do |table|
+        IO.readlines("db/#{settings.environment}_structure.sql").join.split("\n\n").each do |table|
           ActiveRecord::Base.connection.execute(table)
         end
       when "postgresql"
         ENV['PGHOST']     = abcs["test"]["host"] if abcs["test"]["host"]
         ENV['PGPORT']     = abcs["test"]["port"].to_s if abcs["test"]["port"]
         ENV['PGPASSWORD'] = abcs["test"]["password"].to_s if abcs["test"]["password"]
-        `psql -U "#{abcs["test"]["username"]}" -f db/#{APP_ENV}_structure.sql #{abcs["test"]["database"]}`
+        `psql -U "#{abcs["test"]["username"]}" -f db/#{settings.environment}_structure.sql #{abcs["test"]["database"]}`
       when "sqlite", "sqlite3"
         dbfile = abcs["test"]["database"] || abcs["test"]["dbfile"]
-        `#{abcs["test"]["adapter"]} #{dbfile} < db/#{APP_ENV}_structure.sql`
+        `#{abcs["test"]["adapter"]} #{dbfile} < db/#{settings.environment}_structure.sql`
       when "sqlserver"
-        `osql -E -S #{abcs["test"]["host"]} -d #{abcs["test"]["database"]} -i db\\#{APP_ENV}_structure.sql`
+        `osql -E -S #{abcs["test"]["host"]} -d #{abcs["test"]["database"]} -i db\\#{settings.environment}_structure.sql`
       when "oci", "oracle"
         ActiveRecord::Base.establish_connection(:test)
-        IO.readlines("db/#{APP_ENV}_structure.sql").join.split(";\n\n").each do |ddl|
+        IO.readlines("db/#{settings.environment}_structure.sql").join.split(";\n\n").each do |ddl|
           ActiveRecord::Base.connection.execute(ddl)
         end
       when "firebird"
         set_firebird_env(abcs["test"])
         db_string = firebird_db_string(abcs["test"])
-        sh "isql -i db/#{APP_ENV}_structure.sql #{db_string}"
+        sh "isql -i db/#{settings.environment}_structure.sql #{db_string}"
       else
         raise "Task not supported by '#{abcs["test"]["adapter"]}'"
       end
@@ -342,7 +342,7 @@ namespace :db do
       when "sqlserver"
         dropfkscript = "#{abcs["test"]["host"]}.#{abcs["test"]["database"]}.DP1".gsub(/\\/,'-')
         `osql -E -S #{abcs["test"]["host"]} -d #{abcs["test"]["database"]} -i db\\#{dropfkscript}`
-        `osql -E -S #{abcs["test"]["host"]} -d #{abcs["test"]["database"]} -i db\\#{APP_ENV}_structure.sql`
+        `osql -E -S #{abcs["test"]["host"]} -d #{abcs["test"]["database"]} -i db\\#{settings.environment}_structure.sql`
       when "oci", "oracle"
         ActiveRecord::Base.establish_connection(:test)
         ActiveRecord::Base.connection.structure_drop.split(";\n\n").each do |ddl|

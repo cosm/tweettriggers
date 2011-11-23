@@ -15,3 +15,27 @@ p.tips{
   margin-top:2px;
   float:right;
 }
+
+a#twittertrigger-signout {
+  display: block;
+  text-align: right;
+  margin-top: 10px;
+  font-size: smaller;
+  font-weight: normal;
+}
+
+p.tweet-counter {
+  font-size: 0.7em;
+  font-weight: normal;
+  color: grey;
+}
+
+p.tweet-counter input {
+  border: 0;
+  font-weight: bold;
+  width: 28px;
+}
+
+.tweet-counter-warning {
+  color: #D40D12;
+}

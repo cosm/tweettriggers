@@ -43,6 +43,23 @@ def load_twitter_conf
   raise "Error loading twitter conf" if $twitter_config.nil?
 end
 
+def log_level(level)
+  case level.upcase
+  when "DEBUG"
+    Logger::DEBUG
+  when "INFO"
+    Logger::INFO
+  when "WARN"
+    Logger::WARN
+  when "ERROR"
+    Logger::ERROR
+  when "FATAL"
+    Logger::FATAL
+  else
+    Logger::UNKNOWN
+  end
+end
+
 configure do
   APP_TITLE = "Pachube to Twitter"
   load_twitter_conf
@@ -52,9 +69,18 @@ configure do
     :expire_after => 2592000, # In seconds
     :secret => ENV['SESSION_SECRET'] || 'our_awesome_secret'
 
+  ENV['LOG_LEVEL'] ||= 'INFO'
+
   use Rack::Flash
+  use Rack::Logger, log_level(ENV['LOG_LEVEL'])
   setup_db
   set :static, true
+end
+
+helpers do
+  def logger
+    request.logger
+  end
 end
 
 def require_login
@@ -62,6 +88,7 @@ def require_login
 end
 
 before do
+  logger.debug("Session: #{session.inspect}")
   @user = User.find_by_twitter_name(session[:user]) if session[:user]
   @client = TwitterOAuth::Client.new(
     :consumer_key => $twitter_config[:consumer_key],
@@ -78,12 +105,14 @@ end
 # Authenticate the user if necessary
 get '/login' do
   redirect '/triggers/new' if @user
+  @trigger = Trigger.find_by_hash(session[:trigger_hash]) if session[:trigger_hash]
   erb :auth
 end
 
 # New trigger
 get '/triggers/new' do
   require_login
+  logger.debug("Attempting to create trigger for user: #{session[:user]}")
   erb :new
 end
 
@@ -97,28 +126,49 @@ end
 
 # Edit trigger
 get '/triggers/:trigger_hash/edit' do
-  require_login
   session[:trigger_hash] = params[:trigger_hash]
+  require_login
   @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
-  erb :edit
+  if @trigger.nil?
+    session.clear
+    # hang onto the trigger hash, so we can edit it after performing authentication with twitter
+    session[:trigger_hash] = params[:trigger_hash]
+    redirect '/login'
+  else
+    erb :edit
+  end
 end
 
 # Update trigger
 put '/triggers/:trigger_hash' do
   require_login
   @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
-  @trigger.tweet = params['tweet'].strip
-  @trigger.save!
-  content_type :json
-  {'trigger_hash' => @trigger.hash}.to_json
+  if @trigger.nil?
+    session.clear
+    # hang onto the trigger hash, so we can edit it after performing authentication with twitter
+    session[:trigger_hash] = params[:trigger_hash]
+    redirect '/login'
+  else
+    @trigger.tweet = params['tweet'].strip
+    @trigger.save!
+    content_type :json
+    {'trigger_hash' => @trigger.hash}.to_json
+  end
 end
 
 # Delete trigger
 delete '/triggers/:trigger_hash' do
   require_login
   @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
-  @trigger.destroy
-  200
+  if @trigger.nil?
+    session.clear
+    # hang onto the trigger hash, so we can edit it after performing authentication with twitter
+    session[:trigger_hash] = params[:trigger_hash]
+    redirect '/login'
+  else
+    @trigger.destroy
+    200
+  end
 end
 
 # Send trigger
@@ -127,6 +177,7 @@ post '/triggers/:trigger_hash/send' do
   @trigger.send_tweet(params[:body])
   201
 end
+
 # store the request tokens and send to Twitter
 get '/auth/twitter' do
   request_token = @client.request_token(
@@ -155,6 +206,7 @@ get '/auth/twitter/callback' do
       session[:secret_token] = @access_token.secret
 
       @user = User.find_or_create_by_twitter_name(@access_token.params[:screen_name])
+      logger.debug("User: #{@user.inspect}")
       @user.oauth_token = @access_token.token
       @user.oauth_secret = @access_token.secret
       @user.save!
@@ -162,6 +214,7 @@ get '/auth/twitter/callback' do
       session[:user] = @user.twitter_name
 
       @trigger = @user.triggers.find_by_hash(session[:trigger_hash]) if session[:trigger_hash]
+      logger.debug("Trigger: #{@trigger}")
 
       erb :success
     else
@@ -176,4 +229,9 @@ end
 get '/auth/failure' do
   @msg = "Failed to authenticate with Twitter. Please try again."
   erb :auth
+end
+
+post '/auth/twitter/unauthenticate' do
+  session.clear
+  redirect '/login'
 end

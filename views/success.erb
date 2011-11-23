@@ -1,6 +1,6 @@
 <script>
 document.ready = function(){
-  window.opener.success();
+  window.opener.success('<%= @trigger.nil? ? nil : @trigger.hash %>');
 }
 </script>
 <h1>Successfully authenticated</h1>

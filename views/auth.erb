@@ -2,19 +2,29 @@
 
 var oauthWindow;
 
-document.ready = function(){
+document.ready = function() {
+  "use strict";
+
   $('#connect').click(function(){
       oauthWindow = window.open('/auth/twitter', 'Authenticate with Twitter', 'location=0,status=0,width=800,height=400');
       return false;
   });
 }
 
-var success = function(){
+var success = function(trigger_hash) {
+  "use strict";
   oauthWindow.close();
-  window.location = '/triggers/new'
+
+  if (trigger_hash === "") {
+    window.location = '/triggers/new';
+  } else {
+    window.location = '/triggers/' + trigger_hash + '/edit';
+  }
 }
 
 var failure = function(){
+  "use strict";
+
   oauthWindow.close();
   window.location = '/auth/failure'
 }
@@ -23,4 +33,4 @@ var failure = function(){
 <% if defined?(@msg) %>
 <p class="error"><%= @msg %></p>
 <% end %>
-<a href="#" id="connect">Authenticate with Twitter</a>
+<a href="#" id="connect">Authenticate with Twitter<%= @trigger.nil? ? '' : " (@#{@trigger.user.twitter_name})" %></a>

@@ -196,6 +196,33 @@ describe APP_TITLE do
       end
     end
 
+    context "wrong user logged in" do
+      before(:each) do
+        @bob = User.create!(:twitter_name => 'bob')
+        @alice = User.create!(:twitter_name => 'alice')
+        @rack_env = { 'rack.session' => { 'user' => @bob.twitter_name } }
+        User.stub!(:find_by_twitter_name).and_return(@alice)
+        @trigger = @bob.triggers.create!
+      end
+
+      it "should redirect the user to login" do
+        get "/triggers/#{@trigger.hash}/edit", nil, @rack_env
+        last_response.status.should == 302
+        last_response.headers['Location'].should match(/\/login$/)
+      end
+
+      it "should keep the trigger_hash in the session" do
+        get "/triggers/#{@trigger.hash}/edit", nil, @rack_env
+        last_request.env['rack.session']['trigger_hash'].should == @trigger.hash
+      end
+
+      it "should load the trigger object when rendering login" do
+        Trigger.should_receive(:find_by_hash).with(@trigger.hash).and_return(@trigger)
+        get "/triggers/#{@trigger.hash}/edit", nil, @rack_env
+      end
+    end
+
+
     context "user not logged in" do
       it "should redirect to /login" do
         get "/triggers/asdf1234/edit"
@@ -236,6 +263,25 @@ describe APP_TITLE do
       end
     end
 
+    context "wrong user logged in" do
+      before(:each) do
+        @alice = User.create!(:twitter_name => "alice")
+        @rack_env = { 'rack.session' => { 'user' => @alice.twitter_name }}
+        User.stub!(:find_by_twitter_name).and_return(@alice)
+      end
+
+      it "should redirect to /login" do
+        put "/triggers/#{@user.triggers.last.hash}", { 'tweet' => 'something new' }, @rack_env
+        last_response.status.should == 302
+        last_response.headers['Location'].should match(/\/login$/)
+      end
+
+      it "should not update the trigger" do
+        put "/triggers/#{@user.triggers.last.hash}", {'tweet' => 'something_new'}, @rack_env
+        @user.triggers.last.tweet.should_not == "something_new"
+      end
+    end
+
     context "user not logged in" do
       it "should redirect to /login" do
         put "/triggers/#{@user.triggers.last.hash}"
@@ -262,6 +308,25 @@ describe APP_TITLE do
         delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
         last_response.status.should == 200
         @user.triggers.count.should == count - 1
+      end
+    end
+
+    context "wrong user logged in" do
+      before(:each) do
+        @alice = User.create!(:twitter_name => 'alice')
+        @rack_env = {'rack.session' => {'user' => @alice.twitter_name}}
+      end
+
+      it "should redirect to login" do
+        delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
+        last_response.status.should == 302
+        last_response.headers['Location'].should match(/\/login$/)
+      end
+
+      it "should not destroy the trigger" do
+        count = @user.triggers.count
+        delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
+        @user.triggers.count.should == count
       end
     end
 
@@ -403,6 +468,36 @@ describe APP_TITLE do
         get_twitter_callback
         last_response.status.should == 200
         last_response.body.should include("<h1>Failed to authenticate</h1>")
+      end
+    end
+  end
+
+  describe "post /auth/twitter/unauthenticate" do
+    context "user logged in" do
+      before(:each) do
+        @user = User.new(:twitter_name => 'quentin')
+        User.stub!(:find_by_twitter_name).and_return(@user)
+        @rack_env = { 'rack.session' => { 'user' => @user.twitter_name, 'access_token' => 'token', 'secret_token' => 'secret' } }
+      end
+
+      it "should redirect to login" do
+        post "/auth/twitter/unauthenticate"
+        last_response.status.should == 302
+        last_response.headers['Location'].should match(/\/login$/)
+      end
+
+      it "should clear the session" do
+        post "/auth/twitter/unauthenticate"
+        last_request.env['rack.session']['access_token'].should be_nil #== 'token'
+        last_request.env['rack.session']['secret_token'].should be_nil #== 'secret'
+      end
+    end
+
+    context "user not logged in" do
+      it "should redirect to login" do
+        post "/auth/twitter/unauthenticate"
+        last_response.status.should == 302
+        last_response.headers['Location'].should match(/\/login$/)
       end
     end
   end

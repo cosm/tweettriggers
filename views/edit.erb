@@ -9,7 +9,7 @@
         pbt.saved(window.location.href.replace('/edit', '/send'));
       }
     });
-  })
+  });
 
   pbt.addEventListener('delete', function(cb){
     $.ajax({
@@ -19,7 +19,7 @@
         pbt.deleted();
       }
     });
-  })
+  });
 
   pbt.ready();
 </script>

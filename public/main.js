@@ -29,12 +29,14 @@ var get_value = function() {
 
 var update_tweet_counter = function(length) {
   "use strict";
-  var remaining = 140 - length;
-  $('#tweet-counter').val(remaining);
+  var remaining = 130 - length;
+  $('#tweet-counter').html(remaining);
   if (remaining < 0) {
-    $('#tweet-counter').addClass('tweet-counter-warning');
+    $('#tweet-status').html("over");
+    $('.tweet-counter').addClass('tweet-counter-warning');
   } else {
-    $('#tweet-counter').removeClass('tweet-counter-warning');
+    $('#tweet-status').html("remaining");
+    $('.tweet-counter').removeClass('tweet-counter-warning');
   }
 };
 

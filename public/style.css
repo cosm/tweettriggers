@@ -25,17 +25,9 @@ a#twittertrigger-signout {
 }
 
 p.tweet-counter {
-  font-size: 0.7em;
-  font-weight: normal;
-  color: grey;
-}
-
-p.tweet-counter input {
-  border: 0;
-  font-weight: bold;
-  width: 28px;
+  float: none;
 }
 
 .tweet-counter-warning {
-  color: #D40D12;
+  color: #D40D12 !important;
 }

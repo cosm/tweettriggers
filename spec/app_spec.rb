@@ -85,6 +85,22 @@ describe APP_TITLE do
         }.should raise_error
       end
     end
+
+    describe "log_level" do
+      it "should return a valid log level on being passed a string" do
+        log_level("DEBUG").should == Logger::DEBUG
+        log_level("debug").should == Logger::DEBUG
+        log_level("INFO").should == Logger::INFO
+        log_level("info").should == Logger::INFO
+        log_level("WARN").should == Logger::WARN
+        log_level("warn").should == Logger::WARN
+        log_level("ERROR").should == Logger::ERROR
+        log_level("error").should == Logger::ERROR
+        log_level("FATAL").should == Logger::FATAL
+        log_level("fatal").should == Logger::FATAL
+        log_level("anythingelse").should == Logger::UNKNOWN
+      end
+    end
   end
 
   describe "get /" do

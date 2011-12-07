@@ -1,36 +1,30 @@
+<% if defined?(@msg) %>
+  <p class="error"><%= @msg %></p>
+<% end %>
+<a href="#" id="connect">Authenticate with Twitter</a>
+
 <script>
 
-var oauthWindow;
+  var oauthWindow;
 
-document.ready = function() {
-  "use strict";
-
-  $('#connect').click(function(){
-      oauthWindow = window.open('/auth/twitter', 'Authenticate with Twitter', 'location=0,status=0,width=800,height=400');
+  document.ready = function(){
+    "use strict";
+    $('#connect').click(function(){
+      oauthWindow = window.open('/auth/twitter', 'Authenticate_with_Twitter', 'location=0,status=0,width=800,height=400');
       return false;
-  });
-}
+    });
+  };
 
-var success = function(trigger_hash) {
-  "use strict";
-  oauthWindow.close();
-
-  if (trigger_hash === "") {
+  var success = function(){
+    "use strict";
+    oauthWindow.close();
     window.location = '/triggers/new';
-  } else {
-    window.location = '/triggers/' + trigger_hash + '/edit';
-  }
-}
+  };
 
-var failure = function(){
-  "use strict";
-
-  oauthWindow.close();
-  window.location = '/auth/failure'
-}
+  var failure = function(){
+    "use strict";
+    oauthWindow.close();
+    window.location = '/auth/failure';
+  };
 
 </script>
-<% if defined?(@msg) %>
-<p class="error"><%= @msg %></p>
-<% end %>
-<a href="#" id="connect">Authenticate with Twitter<%= @trigger.nil? ? '' : " (@#{@trigger.user.twitter_name})" %></a>

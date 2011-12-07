@@ -6,7 +6,8 @@
       url: '/triggers',
       data: $("#tweetform").serialize(),
       success: function(data){
-        pbt.saved((window.location.origin + window.location.pathname).replace('/new', '/') + data.trigger_hash + '/send');
+        var url = window.location.href.split('?')[0].replace('/new', '/') + data.trigger_hash + '/send';
+        pbt.saved(url);
       }
     });
   });

@@ -1,6 +1,4 @@
-<% if defined?(@msg) %>
-  <p class="error"><%= @msg %></p>
-<% end %>
+<p class="error" style="display:none;"></p>
 <a href="#" id="connect">Authenticate with Twitter</a>
 
 <script>
@@ -18,13 +16,13 @@
   var success = function(){
     "use strict";
     oauthWindow.close();
-    window.location = '/triggers/new';
+    pbt.postMessage({action: 'redirect', url: window.location.href.split('?')[0]});
   };
 
   var failure = function(){
     "use strict";
     oauthWindow.close();
-    window.location = '/auth/failure';
+    $('.error').text("Failed to authenticate with Twitter. Please try again.").show();
   };
 
 </script>

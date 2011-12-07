@@ -6,7 +6,7 @@
       url: '/triggers/<%= @trigger.hash %>',
       data: $("#tweetform").serialize(),
       success: function(data){
-        pbt.saved(window.location.href.replace('/edit', '/send'));
+        pbt.saved((window.location.origin + window.location.pathname).replace('/edit', '/send'));
       }
     });
   });

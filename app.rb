@@ -126,7 +126,7 @@ get '/triggers/:trigger_hash/edit' do
       session.clear
       # hang onto the trigger hash, so we can edit it after performing authentication with twitter
       session[:trigger_hash] = params[:trigger_hash]
-      render :auth
+      erb :auth
     else
       erb :edit
     end
@@ -143,7 +143,7 @@ put '/triggers/:trigger_hash' do
       session.clear
       # hang onto the trigger hash, so we can edit it after performing authentication with twitter
       session[:trigger_hash] = params[:trigger_hash]
-      render :auth
+      erb :auth
     else
       @trigger.tweet = params['tweet'].strip
       @trigger.save!
@@ -160,7 +160,7 @@ delete '/triggers/:trigger_hash' do
     session.clear
     # hang onto the trigger hash, so we can edit it after performing authentication with twitter
     session[:trigger_hash] = params[:trigger_hash]
-    render :auth
+    erb :auth
   else
     @trigger.destroy
     200
@@ -224,5 +224,5 @@ end
 
 post '/auth/twitter/unauthenticate' do
   session.clear
-  render :auth
+  erb :auth
 end

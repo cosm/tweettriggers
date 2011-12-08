@@ -121,7 +121,6 @@ get '/triggers/:trigger_hash/edit' do
     erb :auth
   else
     session[:trigger_hash] = params[:trigger_hash]
-    require_login
     @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
     if @trigger.nil?
       session.clear
@@ -156,8 +155,7 @@ end
 
 # Delete trigger
 delete '/triggers/:trigger_hash' do
-  require_login
-  @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
+  @trigger = Trigger.find_by_hash(params[:trigger_hash])
   if @trigger.nil?
     session.clear
     # hang onto the trigger hash, so we can edit it after performing authentication with twitter

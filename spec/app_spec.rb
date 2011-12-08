@@ -287,47 +287,22 @@ describe APP_TITLE do
     before(:each) do
       @user = User.create!(:twitter_name => 'quentin')
       @user.triggers.create!
+      @rack_env = {}
     end
 
-    context "user logged in" do
-      before(:each) do
-        User.stub!(:find_by_twitter_name).and_return(@user)
-        @rack_env = {'rack.session' => {'user' => @user.twitter_name}}
-      end
-
-      it "should destroy the trigger" do
-        count = @user.triggers.count
-        delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
-        last_response.status.should == 200
-        @user.triggers.count.should == count - 1
-      end
+    it "should destroy the trigger" do
+      count = @user.triggers.count
+      delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
+      last_response.status.should == 200
+      @user.triggers.count.should == count - 1
     end
 
-    context "wrong user logged in" do
-      before(:each) do
-        @alice = User.create!(:twitter_name => 'alice')
-        @rack_env = {'rack.session' => {'user' => @alice.twitter_name}}
-      end
-
-      it "should render :auth" do
-        delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
-        last_response.status.should == 200
-        last_response.body.should include('Authenticate with Twitter')
-      end
-
-      it "should not destroy the trigger" do
-        count = @user.triggers.count
-        delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
-        @user.triggers.count.should == count
-      end
-    end
-
-    context "user not logged in" do
-      it "should render :auth" do
-        delete "/triggers/#{@user.triggers.last.hash}"
-        last_response.status.should == 200
-        last_response.body.should include('Authenticate with Twitter')
-      end
+    it "should render :auth if the trigger is not found" do
+      count = @user.triggers.count
+      delete "/triggers/#{@user.triggers.last.hash}rubbish", nil, @rack_env
+      last_response.status.should == 200
+      last_response.body.should include("Authenticate with Twitter")
+      @user.triggers.count.should == count
     end
   end
 

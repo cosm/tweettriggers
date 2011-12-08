@@ -83,10 +83,6 @@ helpers do
   end
 end
 
-def require_login
-  redirect '/login' if @user.nil?
-end
-
 before do
   logger.debug("Session: #{session.inspect}")
   @user = User.find_by_twitter_name(session[:user]) if session[:user]
@@ -102,69 +98,69 @@ get '/' do
   redirect 'https://pachube.com'
 end
 
-# Authenticate the user if necessary
-get '/login' do
-  redirect '/triggers/new' if @user
-  @trigger = Trigger.find_by_hash(session[:trigger_hash]) if session[:trigger_hash]
-  erb :auth
-end
-
 # New trigger
 get '/triggers/new' do
-  require_login
   logger.debug("Attempting to create trigger for user: #{session[:user]}")
-  erb :new
+  erb @user.nil? ? :auth : :new
 end
 
 # Create trigger
 post '/triggers' do
-  require_login
-  @trigger = @user.triggers.create(:tweet => (params['tweet'] || '').strip)
-  content_type :json
-  {'trigger_hash' => @trigger.hash}.to_json
-end
-
-# Edit trigger
-get '/triggers/:trigger_hash/edit' do
-  session[:trigger_hash] = params[:trigger_hash]
-  require_login
-  @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
-  if @trigger.nil?
-    session.clear
-    # hang onto the trigger hash, so we can edit it after performing authentication with twitter
-    session[:trigger_hash] = params[:trigger_hash]
-    redirect '/login'
+  if @user.nil?
+    erb :auth
   else
-    erb :edit
-  end
-end
-
-# Update trigger
-put '/triggers/:trigger_hash' do
-  require_login
-  @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
-  if @trigger.nil?
-    session.clear
-    # hang onto the trigger hash, so we can edit it after performing authentication with twitter
-    session[:trigger_hash] = params[:trigger_hash]
-    redirect '/login'
-  else
-    @trigger.tweet = params['tweet'].strip
-    @trigger.save!
+    @trigger = @user.triggers.create(:tweet => (params['tweet'] || '').strip)
     content_type :json
     {'trigger_hash' => @trigger.hash}.to_json
   end
 end
 
+# Edit trigger
+get '/triggers/:trigger_hash/edit' do
+  if @user.nil?
+    erb :auth
+  else
+    session[:trigger_hash] = params[:trigger_hash]
+    @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
+    if @trigger.nil?
+      session.clear
+      # hang onto the trigger hash, so we can edit it after performing authentication with twitter
+      session[:trigger_hash] = params[:trigger_hash]
+      erb :auth
+    else
+      erb :edit
+    end
+  end
+end
+
+# Update trigger
+put '/triggers/:trigger_hash' do
+  if @user.nil?
+    erb :auth
+  else
+    @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
+    if @trigger.nil?
+      session.clear
+      # hang onto the trigger hash, so we can edit it after performing authentication with twitter
+      session[:trigger_hash] = params[:trigger_hash]
+      erb :auth
+    else
+      @trigger.tweet = params['tweet'].strip
+      @trigger.save!
+      content_type :json
+      {'trigger_hash' => @trigger.hash}.to_json
+    end
+  end
+end
+
 # Delete trigger
 delete '/triggers/:trigger_hash' do
-  require_login
-  @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
+  @trigger = Trigger.find_by_hash(params[:trigger_hash])
   if @trigger.nil?
     session.clear
     # hang onto the trigger hash, so we can edit it after performing authentication with twitter
     session[:trigger_hash] = params[:trigger_hash]
-    redirect '/login'
+    erb :auth
   else
     @trigger.destroy
     200
@@ -226,12 +222,7 @@ get '/auth/twitter/callback' do
   end
 end
 
-get '/auth/failure' do
-  @msg = "Failed to authenticate with Twitter. Please try again."
-  erb :auth
-end
-
 post '/auth/twitter/unauthenticate' do
   session.clear
-  redirect '/login'
+  erb :auth
 end

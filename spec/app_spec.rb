@@ -111,30 +111,6 @@ describe APP_TITLE do
     end
   end
 
-  describe "get /login" do
-    context "user logged in" do
-      before(:each) do
-        @user = User.new(:twitter_name => 'quentin')
-        @rack_env = {'rack.session' => {'user' => @user.twitter_name}}
-        User.stub!(:find_by_twitter_name).and_return(@user)
-      end
-
-      it "should redirect to /triggers/new" do
-        get "/login" , nil, @rack_env
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/triggers\/new$/)
-      end
-    end
-
-    context "user not logged in" do
-      it "should render the auth template" do
-        get "/login"
-        last_response.status.should == 200
-        last_response.body.should include('Authenticate with Twitter')
-      end
-    end
-  end
-
   describe "get /triggers/new" do
     context "user logged in" do
       before(:each) do
@@ -151,10 +127,10 @@ describe APP_TITLE do
     end
 
     context "user not logged in" do
-      it "should redirect to /login" do
+      it "should render :auth" do
         get "/triggers/new"
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/login$/)
+        last_response.status.should == 200
+        last_response.body.should include('Authenticate with Twitter')
       end
     end
   end
@@ -188,10 +164,10 @@ describe APP_TITLE do
     end
 
     context "user not logged in" do
-      it "should redirect to /login" do
+      it "should render :auth" do
         post "/triggers"
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/login$/)
+        last_response.status.should == 200
+        last_response.body.should include('Authenticate with Twitter')
       end
     end
   end
@@ -221,10 +197,10 @@ describe APP_TITLE do
         @trigger = @bob.triggers.create!
       end
 
-      it "should redirect the user to login" do
+      it "should render :auth" do
         get "/triggers/#{@trigger.hash}/edit", nil, @rack_env
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/login$/)
+        last_response.status.should == 200
+        last_response.body.should include('Authenticate with Twitter')
       end
 
       it "should keep the trigger_hash in the session" do
@@ -240,10 +216,10 @@ describe APP_TITLE do
 
 
     context "user not logged in" do
-      it "should redirect to /login" do
+      it "should render :auth" do
         get "/triggers/asdf1234/edit"
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/login$/)
+        last_response.status.should == 200
+        last_response.body.should include('Authenticate with Twitter')
       end
     end
   end
@@ -286,10 +262,10 @@ describe APP_TITLE do
         User.stub!(:find_by_twitter_name).and_return(@alice)
       end
 
-      it "should redirect to /login" do
+      it "should render :auth" do
         put "/triggers/#{@user.triggers.last.hash}", { 'tweet' => 'something new' }, @rack_env
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/login$/)
+        last_response.status.should == 200
+        last_response.body.should include('Authenticate with Twitter')
       end
 
       it "should not update the trigger" do
@@ -299,10 +275,10 @@ describe APP_TITLE do
     end
 
     context "user not logged in" do
-      it "should redirect to /login" do
+      it "should render :auth" do
         put "/triggers/#{@user.triggers.last.hash}"
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/login$/)
+        last_response.status.should == 200
+        last_response.body.should include('Authenticate with Twitter')
       end
     end
   end
@@ -311,47 +287,22 @@ describe APP_TITLE do
     before(:each) do
       @user = User.create!(:twitter_name => 'quentin')
       @user.triggers.create!
+      @rack_env = {}
     end
 
-    context "user logged in" do
-      before(:each) do
-        User.stub!(:find_by_twitter_name).and_return(@user)
-        @rack_env = {'rack.session' => {'user' => @user.twitter_name}}
-      end
-
-      it "should destroy the trigger" do
-        count = @user.triggers.count
-        delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
-        last_response.status.should == 200
-        @user.triggers.count.should == count - 1
-      end
+    it "should destroy the trigger" do
+      count = @user.triggers.count
+      delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
+      last_response.status.should == 200
+      @user.triggers.count.should == count - 1
     end
 
-    context "wrong user logged in" do
-      before(:each) do
-        @alice = User.create!(:twitter_name => 'alice')
-        @rack_env = {'rack.session' => {'user' => @alice.twitter_name}}
-      end
-
-      it "should redirect to login" do
-        delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/login$/)
-      end
-
-      it "should not destroy the trigger" do
-        count = @user.triggers.count
-        delete "/triggers/#{@user.triggers.last.hash}", nil, @rack_env
-        @user.triggers.count.should == count
-      end
-    end
-
-    context "user not logged in" do
-      it "should redirect to /login" do
-        delete "/triggers/#{@user.triggers.last.hash}"
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/login$/)
-      end
+    it "should render :auth if the trigger is not found" do
+      count = @user.triggers.count
+      delete "/triggers/#{@user.triggers.last.hash}rubbish", nil, @rack_env
+      last_response.status.should == 200
+      last_response.body.should include("Authenticate with Twitter")
+      @user.triggers.count.should == count
     end
   end
 
@@ -366,18 +317,6 @@ describe APP_TITLE do
       @trigger.should_receive(:send_tweet).with('something with urlencoding')
       post "/triggers/#{@user.triggers.last.hash}/send", "body=something%20with%20urlencoding"
       last_response.status.should == 201
-    end
-  end
-
-  describe "get /auth/failure" do
-    it "be successful" do
-      get '/auth/failure'
-      last_response.status.should == 200
-    end
-
-    it "should render a nice failure message" do
-      get '/auth/failure'
-      last_response.body.should include "Failed to authenticate with Twitter"
     end
   end
 
@@ -496,10 +435,10 @@ describe APP_TITLE do
         @rack_env = { 'rack.session' => { 'user' => @user.twitter_name, 'access_token' => 'token', 'secret_token' => 'secret' } }
       end
 
-      it "should redirect to login" do
+      it "should render :auth" do
         post "/auth/twitter/unauthenticate"
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/login$/)
+        last_response.status.should == 200
+        last_response.body.should include('Authenticate with Twitter')
       end
 
       it "should clear the session" do
@@ -510,10 +449,10 @@ describe APP_TITLE do
     end
 
     context "user not logged in" do
-      it "should redirect to login" do
+      it "should render :auth" do
         post "/auth/twitter/unauthenticate"
-        last_response.status.should == 302
-        last_response.headers['Location'].should match(/\/login$/)
+        last_response.status.should == 200
+        last_response.body.should include('Authenticate with Twitter')
       end
     end
   end

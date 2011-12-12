@@ -7,7 +7,7 @@ $('#twittertrigger-signout').click(function(event) {
     url: '/auth/twitter/unauthenticate',
     success: function(data) {
       pbt.postMessage({action: 'notready'});
-      pbt.postMessage({action: 'redirect', url: '/trigger/new'});
+      pbt.postMessage({action: 'redirect', url: window.location.protocol + '//' + window.location.host + '/triggers/new'});
     }
   });
 });

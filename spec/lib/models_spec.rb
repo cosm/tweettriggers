@@ -79,5 +79,32 @@ describe Trigger do
       @trigger.tweet = nil
       @trigger.send_tweet('{}')
     end
+
+    context "exceptions" do
+      it "should throw an exception if Twitter.update raises an error" do
+        now_time = Time.now
+        Twitter.should_receive(:update).with("09120, #{now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, http://pachu.be/504").and_raise(TriggerException)
+        expect {
+          @trigger.send_tweet({
+            'environment' => {
+              'id' => 504
+            },
+            'triggering_datastream' => {
+              'id' => 'myStreamId1',
+              'value' => {
+                'current_value' => '09120'
+              }
+            },
+            'timestamp' => now_time.iso8601(6)
+          }.to_json)
+        }.to raise_error(TriggerException)
+      end
+
+      it "should not raise an exception if passed invalid JSON" do
+        expect {
+          @trigger.send_tweet("this is not json")
+        }.to raise_error(TriggerException)
+      end
+    end
   end
 end

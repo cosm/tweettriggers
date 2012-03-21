@@ -318,6 +318,14 @@ describe APP_TITLE do
       post "/triggers/#{@user.triggers.last.hash}/send", "body=something%20with%20urlencoding"
       last_response.status.should == 201
     end
+
+    it "should handle exceptions" do
+      Trigger.should_receive(:find_by_hash).with(@trigger.hash).and_return(@trigger)
+      @trigger.should_receive(:send_tweet).and_raise(TriggerException.new("duplicate tweet"))
+      post "/triggers/#{@user.triggers.last.hash}/send", "body=something%20with%20urlencoding"
+      last_response.status.should == 400
+      last_response.body.should == "Unable to deliver trigger: duplicate tweet"
+    end
   end
 
   describe "get /auth/twitter" do

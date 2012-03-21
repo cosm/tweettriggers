@@ -94,6 +94,11 @@ before do
   )
 end
 
+error TriggerException do
+  status 400
+  "Unable to deliver trigger: #{env['sinatra.error'].message}"
+end
+
 get '/' do
   redirect 'https://pachube.com'
 end

@@ -1,3 +1,5 @@
+[![Build Status](https://secure.travis-ci.org/pachube/tweettriggers.png)](http://travis-ci.org/pachube/tweettriggers)
+
 # README
 
 An app is defined by three URLs:

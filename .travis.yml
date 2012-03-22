@@ -1,3 +1,7 @@
 language: ruby
 rvm:
   - 1.9.2
+before_script:
+  - psql -c 'create database tweettriggers_test;' -U postgres
+  - cp config/database-sample.yml config/database.yml
+  - cp config/twitter-sample.yml config/twitter.yml

@@ -1,8 +1,7 @@
-
 development:
   adapter: postgresql
   encoding: unicode
-  database: twittertrigger_development
+  database: tweettriggers_development
   pool: 5
   username: rails
   password:
@@ -11,8 +10,5 @@ development:
 test:
   adapter: postgresql
   encoding: unicode
-  database: twittertrigger_test
-  pool: 5
-  username: rails
-  password:
-  template: template0
+  database: tweettriggers_test
+  username: postgres

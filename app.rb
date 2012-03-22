@@ -95,6 +95,8 @@ before do
 end
 
 error TriggerException do
+  logger.warn("[ERROR] - Error sending trigger: #{env['sinatra.error'].message}")
+
   status 400
   "Unable to deliver trigger: #{env['sinatra.error'].message}"
 end

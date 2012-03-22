@@ -1,5 +1,7 @@
 require 'digest/sha1'
 
+class TriggerException < Exception; end
+
 class User < ActiveRecord::Base
   has_many :triggers
 end
@@ -12,15 +14,20 @@ class Trigger < ActiveRecord::Base
   def send_tweet(trigger_json)
     return if self.tweet.nil? # Ensure we have a tweet template
 
-    trigger = JSON.parse(trigger_json)
-    # We currently use the value => value format, but we should change it. this will keep us working, and maintain backward compat.
-    Twitter.configure do |config|
-      config.consumer_key = $twitter_config[:consumer_key]
-      config.consumer_secret = $twitter_config[:consumer_secret]
-      config.oauth_token = user.oauth_token
-      config.oauth_token_secret = user.oauth_secret
+    begin
+      trigger = JSON.parse(trigger_json)
+      # We currently use the value => value format, but we should change it. this will keep us working, and maintain backward compat.
+      Twitter.configure do |config|
+        config.consumer_key = $twitter_config[:consumer_key]
+        config.consumer_secret = $twitter_config[:consumer_secret]
+        config.oauth_token = user.oauth_token
+        config.oauth_token_secret = user.oauth_secret
+      end
+
+      Twitter.update(tweet_text(trigger))
+    rescue Exception => e
+      raise TriggerException, "Error delivering trigger: #{e.class}, for trigger: #{trigger_json}"
     end
-    Twitter.update(tweet_text(trigger))
   end
 
   private

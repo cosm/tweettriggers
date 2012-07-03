@@ -1,6 +1,18 @@
 language: ruby
 rvm:
-  - 1.9.2
+ - 1.8.7
+ - 1.9.2
+ - 1.9.3
+ - jruby-18mode
+ - jruby-19mode
+ - rbx
+ - ree
+matrix:
+  allow_failures:
+    - rvm: jruby-18mode
+    - rvm: jruby-19mode
+    - rvm: rbx
+    - rvm: ree
 before_script:
   - psql -c 'create database tweettriggers_test;' -U postgres
   - cp config/database-sample.yml config/database.yml

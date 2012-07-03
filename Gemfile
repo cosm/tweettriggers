@@ -18,7 +18,7 @@ group :development, :test do
   gem 'heroku', '2.3.6'
   gem 'rspec', '2.6.0'
   gem 'rack-test', '0.6.1'
-  gem 'ruby-debug19', '0.11.6'
+  gem 'ruby-debug19', '0.11.6', :platforms => :ruby_19
   gem 'database_cleaner', '0.6.7'
   gem 'simplecov', '0.5.3', :require => false
   gem 'rake', '0.9.2'

@@ -26,7 +26,7 @@ class Trigger < ActiveRecord::Base
 
       Twitter.update(tweet_text(trigger))
     rescue Exception => e
-      raise TriggerException, "Error delivering trigger: #{e.class}, for trigger: #{trigger_json}"
+      raise TriggerException, "Error delivering trigger: #{e.inspect}, for trigger: #{trigger_json}"
     end
   end
 

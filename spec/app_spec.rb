@@ -86,6 +86,33 @@ describe APP_TITLE do
       end
     end
 
+    describe "setup_redis" do
+      it "should setup the redis connection" do
+        config = { test: { host: "127.0.0.1", port: 6379, password: "bobbins" } }
+
+        YAML.should_receive(:load_file).with("config/redis.yml").and_return(config)
+        Redis.should_receive(:new).with(config[:test])
+        setup_redis
+      end
+
+      it "should use the environment variable database_uri if provided" do
+        redis_uri = 'redis://redis:password@redis.com:9006/'
+        YAML.should_not_receive(:load_file)
+        ENV.should_receive(:[]).twice.with('REDISTOGO_URL').and_return(redis_uri)
+        Redis.should_receive(:new).with({ host: 'redis.com', port: 9006, password: 'password' })
+        setup_redis
+      end
+
+      it "should throw an error if no redis_uri is set and config file is empty" do
+        ENV.should_receive(:[]).with('REDISTOGO_URL').and_return(nil)
+        YAML.should_receive(:load_file).with('config/redis.yml').and_return(YAML::dump({:test => {}}))
+
+        lambda {
+          setup_redis
+        }.should raise_error
+      end
+    end
+
     describe "log_level" do
       it "should return a valid log level on being passed a string" do
         log_level("DEBUG").should == Logger::DEBUG
@@ -319,12 +346,19 @@ describe APP_TITLE do
       last_response.status.should == 201
     end
 
-    it "should handle exceptions" do
+    it "should handle trigger exceptions" do
       Trigger.should_receive(:find_by_hash).with(@trigger.hash).and_return(@trigger)
       @trigger.should_receive(:send_tweet).and_raise(TriggerException.new("duplicate tweet"))
       post "/triggers/#{@user.triggers.last.hash}/send", "body=something%20with%20urlencoding"
       last_response.status.should == 400
       last_response.body.should == "Unable to deliver trigger: duplicate tweet"
+    end
+
+    it "should handle other exceptions" do
+      Trigger.should_receive(:find_by_hash).and_raise(Exception.new("Bad stuff"))
+      post "/triggers/#{@user.triggers.last.hash}/send", "body=something"
+      last_response.status.should == 500
+      last_response.body.should == "Unexpected error occurred: Bad stuff"
     end
   end
 
@@ -461,6 +495,44 @@ describe APP_TITLE do
         post "/auth/twitter/unauthenticate"
         last_response.status.should == 200
         last_response.body.should include('Authenticate with Twitter')
+      end
+    end
+  end
+
+  describe "get /stats" do
+    before(:each) do
+      $redis = double("redis")
+      $redis.stub!(:get).and_return(0)
+      ENV.stub!(:[]).with('ADMIN_PASSWORD').and_return("password")
+    end
+
+    context "when user has admin password" do
+      before(:each) do
+        authorize 'admin', 'password'
+      end
+
+      it "should be successful" do
+        get "/stats"
+        last_response.status.should == 200
+      end
+
+      it "should get our stats from redis" do
+        $redis.should_receive(:get).with(TOTAL_JOBS).and_return(123)
+        $redis.should_receive(:get).with(TOTAL_ERRORS).and_return(4)
+        get "/stats"
+      end
+
+      it "should render our csv output" do
+        get "/stats"
+        last_response.body.should == "total_jobs,total_errors\n0,0\n"
+        last_response.headers["Content-Type"].should match(/text\/csv/)
+      end
+    end
+
+    context "when user doesn't have admin password" do
+      it "should not be successful" do
+        get "/stats"
+        last_response.status.should == 401
       end
     end
   end

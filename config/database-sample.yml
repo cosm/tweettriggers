@@ -6,6 +6,7 @@ development:
   username: rails
   password: r4i75lol
   template: template0
+  host: localhost
 
 test:
   adapter: postgresql
@@ -15,3 +16,4 @@ test:
   username: rails
   password: r4i75lol
   template: template0
+  host: localhost

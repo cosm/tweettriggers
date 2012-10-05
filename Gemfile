@@ -13,6 +13,7 @@ gem 'twitter', '1.7.2'
 #gem 'em-resolv-replace'
 #gem 'thin'
 gem 'unicorn', '4.0.1'
+gem 'redis', '3.0.1'
 
 group :development, :test do
   gem 'heroku', '2.32.4'

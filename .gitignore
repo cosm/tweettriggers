@@ -4,6 +4,7 @@
 tmp/restart.txt
 config/database.yml
 config/twitter.yml
+config/redis.yml
 *._*
 *.sw?
 coverage/*

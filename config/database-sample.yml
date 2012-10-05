@@ -4,7 +4,7 @@ development:
   database: tweettriggers_development
   pool: 5
   username: rails
-  password: r4i75lol
+  password:
   template: template0
   host: localhost
 
@@ -14,6 +14,6 @@ test:
   database: tweettriggers_test
   pool: 5
   username: rails
-  password: r4i75lol
+  password:
   template: template0
   host: localhost

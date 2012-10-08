@@ -1,4 +1,5 @@
 task(:environment) do
+  require './app'
   setup_db
 end
 

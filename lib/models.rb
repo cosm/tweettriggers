@@ -8,9 +8,9 @@ end
 
 class Trigger < ActiveRecord::Base
   belongs_to :user
-  
+
   before_validation :generate_hash
-  
+
   def send_tweet(trigger_json)
     return if self.tweet.nil? # Ensure we have a tweet template
 
@@ -25,8 +25,10 @@ class Trigger < ActiveRecord::Base
       end
 
       Twitter.update(tweet_text(trigger))
+      $redis.incr TOTAL_JOBS
     rescue Exception => e
-      raise TriggerException, "Error delivering trigger: #{e.class}, for trigger: #{trigger_json}"
+      $redis.incr TOTAL_ERRORS
+      raise TriggerException, "Error delivering trigger: #{e.inspect}, for trigger: #{trigger_json}"
     end
   end
 

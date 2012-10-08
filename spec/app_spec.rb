@@ -99,7 +99,7 @@ describe APP_TITLE do
         redis_uri = 'redis://redis:password@redis.com:9006/'
         YAML.should_not_receive(:load_file)
         ENV.should_receive(:[]).twice.with('REDISTOGO_URL').and_return(redis_uri)
-        Redis.should_receive(:new).with({ host: 'redis.com', port: 9006, password: 'password' })
+        Redis.should_receive(:new).with({ :host => 'redis.com', :port => 9006, :password => 'password' })
         setup_redis
       end
 

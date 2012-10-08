@@ -13,9 +13,10 @@ gem 'twitter', '1.7.2'
 #gem 'em-resolv-replace'
 #gem 'thin'
 gem 'unicorn', '4.0.1'
+gem 'redis', '3.0.1'
 
 group :development, :test do
-  gem 'heroku', '2.3.6'
+  gem 'heroku', '2.32.4'
   gem 'rspec', '2.6.0'
   gem 'rack-test', '0.6.1'
   gem 'ruby-debug19', '0.11.6', :platforms => :ruby_19

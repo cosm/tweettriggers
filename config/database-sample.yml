@@ -6,9 +6,14 @@ development:
   username: rails
   password:
   template: template0
+  host: localhost
 
 test:
   adapter: postgresql
   encoding: unicode
   database: tweettriggers_test
-  username: postgres
+  pool: 5
+  username: rails
+  password:
+  template: template0
+  host: localhost

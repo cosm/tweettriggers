@@ -9,7 +9,11 @@ require 'uri'
 require 'twitter'
 require 'twitter_oauth'
 require 'time'
+require 'redis'
 require './lib/models'
+
+TOTAL_JOBS = "tweettriggers.total_jobs"
+TOTAL_ERRORS = "tweettriggers.total_errors"
 
 def setup_db
   if ENV['DATABASE_URL']
@@ -43,6 +47,24 @@ def load_twitter_conf
   raise "Error loading twitter conf" if $twitter_config.nil?
 end
 
+def setup_redis
+  if ENV['REDISTOGO_URL']
+    redis_uri = URI.parse(ENV['REDISTOGO_URL'])
+
+    raise "Error connecting to Redis" if redis_uri.nil?
+
+    $redis = Redis.new({ :host => redis_uri.host, :port => redis_uri.port,
+                        :password => redis_uri.password }.delete_if { |k, v| v.nil? || v.to_s.empty? })
+  else
+    redis_config = YAML.load_file("config/redis.yml").with_indifferent_access[settings.environment]
+
+    raise "No Redis config found" if redis_config.empty?
+
+    $redis = Redis.new({ :host => redis_config[:host], :port => redis_config[:port],
+                         :password => redis_config[:password] }.delete_if { |k, v| v.nil? || v.to_s.empty? })
+  end
+end
+
 def log_level(level)
   case level.upcase
   when "DEBUG"
@@ -74,12 +96,27 @@ configure do
   use Rack::Flash
   use Rack::Logger, log_level(ENV['LOG_LEVEL'])
   setup_db
+  setup_redis
   set :static, true
+  set :show_exceptions, false
+  set :dump_errors, false
 end
 
 helpers do
   def logger
     request.logger
+  end
+
+  def protected!
+    unless authorized?
+      response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
+      throw(:halt, [401, "Not authorized\n"])
+    end
+  end
+
+  def authorized?
+    @auth ||=  Rack::Auth::Basic::Request.new(request.env)
+    ENV['ADMIN_PASSWORD'] && @auth.provided? && @auth.basic? && @auth.credentials && @auth.credentials == ['admin', ENV['ADMIN_PASSWORD']]
   end
 end
 
@@ -99,6 +136,12 @@ error TriggerException do
 
   status 400
   "Unable to deliver trigger: #{env['sinatra.error'].message}"
+end
+
+error do
+  logger.warn("[ERROR] - Unexpected error: #{env['sinatra.error'].inspect}")
+  status 500
+  "Unexpected error occurred: #{env['sinatra.error'].message}"
 end
 
 get '/' do
@@ -232,4 +275,15 @@ end
 post '/auth/twitter/unauthenticate' do
   session.clear
   erb :auth
+end
+
+get '/stats' do
+  protected!
+  content_type :csv
+
+  csv = <<-CSV
+total_jobs,total_errors
+#{$redis.get(TOTAL_JOBS).to_i},#{$redis.get(TOTAL_ERRORS).to_i}
+CSV
+  csv
 end

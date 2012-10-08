@@ -88,7 +88,7 @@ describe APP_TITLE do
 
     describe "setup_redis" do
       it "should setup the redis connection" do
-        config = { test: { host: "127.0.0.1", port: 6379, password: "bobbins" } }
+        config = { :test => { :host => "127.0.0.1", :port => 6379, :password => "bobbins" } }
 
         YAML.should_receive(:load_file).with("config/redis.yml").and_return(config)
         Redis.should_receive(:new).with(config[:test])

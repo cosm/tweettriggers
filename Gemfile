@@ -1,6 +1,6 @@
 source :rubygems
 gem 'sinatra', '1.2.6'
-gem 'twitter_oauth', '0.4.3'
+gem 'twitter_oauth', '0.4.4'
 gem "yajl-ruby", '0.8.2', :require => "yajl/json_gem"
 gem 'activerecord', '3.0.9'
 gem 'activesupport', '3.0.9'

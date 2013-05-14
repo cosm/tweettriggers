@@ -83,7 +83,7 @@ def log_level(level)
 end
 
 configure do
-  APP_TITLE = "Cosm to Twitter"
+  APP_TITLE = "Xively to Twitter"
   load_twitter_conf
 
   use Rack::Session::Cookie, :key => '_pachube_twitter_triggers',
@@ -145,7 +145,7 @@ error do
 end
 
 get '/' do
-  redirect 'https://cosm.com'
+  redirect 'https://xively.com'
 end
 
 # New trigger

@@ -1,7 +1,7 @@
 <form action="" method="post" id="tweetform">
   <label for="tweet">Tweet text</label>
-  <p class="tips">You can use {datastream}, {feed}, {value}, {time}, {feed_url} to have Cosm insert dynamic text</p>
-  <textarea id="tweet" name="tweet"><% if @trigger && @trigger.tweet %><%= @trigger.tweet %><% else %>Datastream {datastream} of feed {feed} changed to {value} at {time} on #cosm at {feed_url}<% end %></textarea>
+  <p class="tips">You can use {datastream}, {feed}, {value}, {time}, {feed_url} to have Xively insert dynamic text</p>
+  <textarea id="tweet" name="tweet"><% if @trigger && @trigger.tweet %><%= @trigger.tweet %><% else %>Datastream {datastream} of feed {feed} changed to {value} at {time} on #xively at {feed_url}<% end %></textarea>
   <label>Tweet preview - @<%= session[:user] %></label>
   <p id="previewtweet"></p>
   <p class="tips tweet-counter">Approx <span id="tweet-counter">130</span> characters <span id="tweet-status">remaining</span>.</p>

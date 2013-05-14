@@ -43,4 +43,4 @@ This has all been wrapped up into a javascript module for further simplicity
 ## TODO
 
 * Get app building on Jenkins
-* Add delete handler so app does something sensible when the trigger is deleted on Cosm.
+* Add delete handler so app does something sensible when the trigger is deleted on Xively.

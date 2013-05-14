@@ -131,10 +131,10 @@ describe APP_TITLE do
   end
 
   describe "get /" do
-    it "should redirect to cosm" do
+    it "should redirect to xively" do
       get "/"
       last_response.status.should == 302
-      last_response.headers['Location'].should == 'https://cosm.com'
+      last_response.headers['Location'].should == 'https://xively.com'
     end
   end
 

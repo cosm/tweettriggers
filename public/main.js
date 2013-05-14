@@ -45,7 +45,7 @@ var preview_tweet = function() {
   var tweet = $('#tweet').val()
     .replace('{datastream}', 'energy')
     .replace('{feed}', '1234')
-    .replace('{feed_url}', "https://cosm.com/feeds/" + '1234')
+    .replace('{feed_url}', "https://xively.com/feeds/" + '1234')
     .replace('{time}', get_time())
     .replace('{value}', '234.4');
   $('#previewtweet').text(tweet);

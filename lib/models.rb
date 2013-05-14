@@ -44,7 +44,8 @@ class Trigger < ActiveRecord::Base
       gsub('{time}', format_time(timestamp)).
       gsub('{datastream}', stream_id).
       gsub('{feed}', feed_id).
-      gsub('{feed_url}', "https://cosm.com/feeds/#{feed_id}")
+      gsub('{feed_url}', "https://xively.com/feeds/#{feed_id}").
+      gsub('cosm', 'xively')
   end
   
   def format_time(time)

@@ -23,7 +23,7 @@ describe Trigger do
   before(:each) do
     @user = User.create!(:twitter_name => 'TheRealRickAstley')
     @trigger = @user.triggers.create!(
-      :tweet => '{value}, {time}, {datastream}, {feed}, {feed_url}'
+      :tweet => '{value}, {time}, {datastream}, {feed}, {feed_url} #cosm'
     )
   end
 
@@ -58,7 +58,7 @@ describe Trigger do
   context "#send_tweet" do
     it "should render the tweet and send it to Twitter" do
       now_time = Time.now
-      Twitter.should_receive(:update).with("09120, #{now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://cosm.com/feeds/504")
+      Twitter.should_receive(:update).with("09120, #{now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://xively.com/feeds/504 #xively")
       @trigger.send_tweet({
         'environment' => {
           'id' => 504
@@ -83,7 +83,7 @@ describe Trigger do
     context "exceptions" do
       it "should throw an exception if Twitter.update raises an error" do
         now_time = Time.now
-        Twitter.should_receive(:update).with("09120, #{now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://cosm.com/feeds/504").and_raise(TriggerException)
+        Twitter.should_receive(:update).with("09120, #{now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://xively.com/feeds/504 #xively").and_raise(TriggerException)
         expect {
           @trigger.send_tweet({
             'environment' => {

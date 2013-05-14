@@ -8,6 +8,7 @@ gem 'sinatra-activerecord', '0.1.3'
 gem 'pg', '0.11.0'
 gem 'rack-flash', '0.1.2'
 gem 'twitter', '1.7.2'
+gem 'faraday_middleware', '0.7.0'
 #gem 'rack-fiber_pool'
 #gem 'em-synchrony'
 #gem 'em-resolv-replace'
@@ -19,7 +20,6 @@ group :development, :test do
   gem 'heroku', '2.32.4'
   gem 'rspec', '2.6.0'
   gem 'rack-test', '0.6.1'
-  gem 'ruby-debug19', '0.11.6', :platforms => :ruby_19
   gem 'database_cleaner', '0.6.7'
   gem 'simplecov', '0.5.3', :require => false
   gem 'rake', '0.9.2'

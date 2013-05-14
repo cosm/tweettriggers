@@ -35,7 +35,7 @@ class Trigger < ActiveRecord::Base
   private
 
   def tweet_text(trigger)
-    new_value = trigger['triggering_datastream']['value']['current_value'] || trigger['triggering_datastream']['value']['value'] 
+    new_value = trigger['triggering_datastream']['value']['current_value'] || trigger['triggering_datastream']['value']['value']
     timestamp = trigger['timestamp']
     stream_id = trigger['triggering_datastream']['id']
     feed_id = trigger['environment']['id'].to_s
@@ -47,15 +47,15 @@ class Trigger < ActiveRecord::Base
       gsub('{feed_url}', "https://xively.com/feeds/#{feed_id}").
       gsub('cosm', 'xively')
   end
-  
+
   def format_time(time)
     Time.parse(time).strftime('%Y-%m-%d %T')
   end
-  
+
   def generate_hash
     self.hash ||= hash_generator
   end
-  
+
   def hash_generator
     @hashfunc = Digest::SHA1.new
     @hashfunc.update(Time.now.iso8601(6) + rand(100000000).to_s)

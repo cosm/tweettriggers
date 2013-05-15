@@ -11,8 +11,7 @@ gem 'unicorn', '4.0.1'
 gem 'redis', '3.0.1'
 
 group :development do
-  gem 'debugger', :platform => :ruby_19
-  gem 'ruby-debug', :platform => :ruby_18
+  gem 'debugger'
 end
 
 group :test do

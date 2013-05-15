@@ -5,7 +5,6 @@ SimpleCov.start do
   add_filter "/spec/"
   add_filter "/public/"
   add_filter "/tasks/"
-  add_filter "/views/"
 end
 
 require File.join(File.dirname(__FILE__), '..', 'app.rb')

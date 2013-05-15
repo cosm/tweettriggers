@@ -9,4 +9,4 @@ config/redis.yml
 *.sw?
 coverage/*
 .bundle
-vendor
+vendor/bundle

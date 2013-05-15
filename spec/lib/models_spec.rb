@@ -23,7 +23,7 @@ describe Trigger do
   before(:each) do
     @user = User.create!(:twitter_name => 'TheRealRickAstley')
     @trigger = @user.triggers.create!(
-      :tweet => '{value}, {time}, {datastream}, {feed}, {feed_url}'
+      :tweet => '{value}, {time}, {datastream}, {feed}, {feed_url} #cosm'
     )
   end
 
@@ -56,10 +56,12 @@ describe Trigger do
   end
 
   context "#send_tweet" do
-    it "should render the tweet and send it to Twitter" do
-      now_time = Time.now
-      Twitter.should_receive(:update).with("09120, #{now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://cosm.com/feeds/504")
-      @trigger.send_tweet({
+    before(:each) do
+      $redis = double("redis")
+      $redis.stub(:incr)
+      Twitter.stub(:update)
+      @now_time = Time.now
+      @tweet = {
         'environment' => {
           'id' => 504
         },
@@ -69,8 +71,18 @@ describe Trigger do
             'current_value' => '09120'
           }
         },
-        'timestamp' => now_time.iso8601(6)
-      }.to_json)
+        'timestamp' => @now_time.iso8601(6)
+      }.to_json
+    end
+
+    it "should render the tweet and send it to Twitter" do
+      Twitter.should_receive(:update).with("09120, #{@now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://xively.com/feeds/504 #xively")
+      @trigger.send_tweet(@tweet)
+    end
+
+    it "should increment the counter in redis" do
+      $redis.should_receive(:incr).with(TOTAL_JOBS)
+      @trigger.send_tweet(@tweet)
     end
 
     it "should not send a tweet if the tweet text is nil" do
@@ -82,21 +94,9 @@ describe Trigger do
 
     context "exceptions" do
       it "should throw an exception if Twitter.update raises an error" do
-        now_time = Time.now
-        Twitter.should_receive(:update).with("09120, #{now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://cosm.com/feeds/504").and_raise(TriggerException)
+        Twitter.should_receive(:update).with("09120, #{@now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://xively.com/feeds/504 #xively").and_raise(TriggerException)
         expect {
-          @trigger.send_tweet({
-            'environment' => {
-              'id' => 504
-            },
-            'triggering_datastream' => {
-              'id' => 'myStreamId1',
-              'value' => {
-                'current_value' => '09120'
-              }
-            },
-            'timestamp' => now_time.iso8601(6)
-          }.to_json)
+          @trigger.send_tweet(@tweet)
         }.to raise_error(TriggerException)
       end
 

@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+if [ $# -gt 0 ]; then
+  command="bundle exec rspec --debugger --format documentation $@"
+
+  set -v
+  eval $command
+else
+  set -v
+  eval "COVERAGE=on bundle exec rspec --order random"
+fi

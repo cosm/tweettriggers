@@ -3,11 +3,9 @@ require "rubygems"
 require "bundler/setup"
 require 'sinatra'
 require 'active_record'
-require 'rack-flash'
 require 'yaml'
 require 'uri'
 require 'twitter'
-require 'twitter_oauth'
 require 'time'
 require 'redis'
 require './lib/models'
@@ -83,7 +81,7 @@ def log_level(level)
 end
 
 configure do
-  APP_TITLE = "Cosm to Twitter"
+  APP_TITLE = "Xively to Twitter"
   load_twitter_conf
 
   use Rack::Session::Cookie, :key => '_pachube_twitter_triggers',
@@ -93,7 +91,6 @@ configure do
 
   ENV['LOG_LEVEL'] ||= 'INFO'
 
-  use Rack::Flash
   use Rack::Logger, log_level(ENV['LOG_LEVEL'])
   setup_db
   setup_redis
@@ -120,17 +117,6 @@ helpers do
   end
 end
 
-before do
-  logger.debug("Session: #{session.inspect}")
-  @user = User.find_by_twitter_name(session[:user]) if session[:user]
-  @client = TwitterOAuth::Client.new(
-    :consumer_key => $twitter_config[:consumer_key],
-    :consumer_secret => $twitter_config[:consumer_secret],
-    :token => session[:access_token],
-    :secret => session[:secret_token]
-  )
-end
-
 error TriggerException do
   logger.warn("[ERROR] - Error sending trigger: #{env['sinatra.error'].message}")
 
@@ -145,76 +131,7 @@ error do
 end
 
 get '/' do
-  redirect 'https://cosm.com'
-end
-
-# New trigger
-get '/triggers/new' do
-  logger.debug("Attempting to create trigger for user: #{session[:user]}")
-  erb @user.nil? ? :auth : :new
-end
-
-# Create trigger
-post '/triggers' do
-  if @user.nil?
-    erb :auth
-  else
-    @trigger = @user.triggers.create(:tweet => (params['tweet'] || '').strip)
-    content_type :json
-    {'trigger_hash' => @trigger.hash}.to_json
-  end
-end
-
-# Edit trigger
-get '/triggers/:trigger_hash/edit' do
-  if @user.nil?
-    erb :auth
-  else
-    session[:trigger_hash] = params[:trigger_hash]
-    @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
-    if @trigger.nil?
-      session.clear
-      # hang onto the trigger hash, so we can edit it after performing authentication with twitter
-      session[:trigger_hash] = params[:trigger_hash]
-      erb :auth
-    else
-      erb :edit
-    end
-  end
-end
-
-# Update trigger
-put '/triggers/:trigger_hash' do
-  if @user.nil?
-    erb :auth
-  else
-    @trigger = @user.triggers.find_by_hash(params[:trigger_hash])
-    if @trigger.nil?
-      session.clear
-      # hang onto the trigger hash, so we can edit it after performing authentication with twitter
-      session[:trigger_hash] = params[:trigger_hash]
-      erb :auth
-    else
-      @trigger.tweet = params['tweet'].strip
-      @trigger.save!
-      content_type :json
-      {'trigger_hash' => @trigger.hash}.to_json
-    end
-  end
-end
-
-# Delete trigger
-delete '/triggers/:trigger_hash' do
-  @trigger = Trigger.find_by_hash(params[:trigger_hash])
-  if @trigger.nil?
-    session.clear
-    # hang onto the trigger hash, so we can edit it after performing authentication with twitter
-    session[:trigger_hash] = params[:trigger_hash]
-    erb :auth
-  else
-    @trigger.destroy
-    200
-  end
+  redirect 'https://xively.com'
 end
 
 # Send trigger
@@ -222,59 +139,6 @@ post '/triggers/:trigger_hash/send' do
   @trigger = Trigger.find_by_hash(params[:trigger_hash])
   @trigger.send_tweet(params[:body])
   201
-end
-
-# store the request tokens and send to Twitter
-get '/auth/twitter' do
-  request_token = @client.request_token(
-    :oauth_callback => url('/auth/twitter/callback')
-  )
-  session[:request_token] = request_token.token
-  session[:request_token_secret] = request_token.secret
-  redirect request_token.authorize_url
-end
-
-# auth URL is called by twitter after the user has accepted the application
-# this is configured on the Twitter application settings page
-get '/auth/twitter/callback' do
-  # Exchange the request token for an access token.
-  begin
-    @access_token = @client.authorize(
-      session[:request_token],
-      session[:request_token_secret],
-      :oauth_verifier => params[:oauth_verifier]
-    )
-
-    if @client.authorized?
-      # Storing the access tokens so we don't have to go back to Twitter again
-      # in this session.  In a larger app you would probably persist these details somewhere.
-      session[:access_token] = @access_token.token
-      session[:secret_token] = @access_token.secret
-
-      @user = User.find_or_create_by_twitter_name(@access_token.params[:screen_name])
-      logger.debug("User: #{@user.inspect}")
-      @user.oauth_token = @access_token.token
-      @user.oauth_secret = @access_token.secret
-      @user.save!
-
-      session[:user] = @user.twitter_name
-
-      @trigger = @user.triggers.find_by_hash(session[:trigger_hash]) if session[:trigger_hash]
-      logger.debug("Trigger: #{@trigger}")
-
-      erb :success
-    else
-      erb :failure
-    end
-
-  rescue OAuth::Unauthorized => exception
-    erb :failure
-  end
-end
-
-post '/auth/twitter/unauthenticate' do
-  session.clear
-  erb :auth
 end
 
 get '/stats' do

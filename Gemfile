@@ -1,4 +1,5 @@
-source :rubygems
+source 'https://rubygems.org'
+
 gem 'sinatra', '1.2.6'
 gem "yajl-ruby", '0.8.2', :require => "yajl/json_gem"
 gem 'activerecord', '3.0.9'

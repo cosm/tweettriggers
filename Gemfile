@@ -10,7 +10,12 @@ gem 'faraday_middleware', '0.7.0'
 gem 'unicorn', '4.0.1'
 gem 'redis', '3.0.1'
 
-group :development, :test do
+group :development do
+  gem 'debugger', :platform => :ruby_19
+  gem 'ruby-debug', :platform => :ruby_18
+end
+
+group :test do
   gem 'heroku', '2.32.4'
   gem 'rspec'
   gem 'rack-test', '0.6.1'

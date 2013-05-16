@@ -23,7 +23,7 @@ describe Trigger do
   before(:each) do
     @user = User.create!(:twitter_name => 'TheRealRickAstley')
     @trigger = @user.triggers.create!(
-      :tweet => '{value}, {time}, {datastream}, {feed}, {feed_url} #cosm'
+      :tweet => '{value}, {time}, {datastream}, {feed}, {feed_url} #cosm #pachube'
     )
   end
 
@@ -76,7 +76,7 @@ describe Trigger do
     end
 
     it "should render the tweet and send it to Twitter" do
-      Twitter.should_receive(:update).with("09120, #{@now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://xively.com/feeds/504 #xively")
+      Twitter.should_receive(:update).with("09120, #{@now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://xively.com/feeds/504 #xively #xively")
       @trigger.send_tweet(@tweet)
     end
 
@@ -94,7 +94,7 @@ describe Trigger do
 
     context "exceptions" do
       it "should throw an exception if Twitter.update raises an error" do
-        Twitter.should_receive(:update).with("09120, #{@now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://xively.com/feeds/504 #xively").and_raise(TriggerException)
+        Twitter.should_receive(:update).with("09120, #{@now_time.strftime('%Y-%m-%d %T')}, myStreamId1, 504, https://xively.com/feeds/504 #xively #xively").and_raise(TriggerException)
         expect {
           @trigger.send_tweet(@tweet)
         }.to raise_error(TriggerException)
